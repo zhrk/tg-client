@@ -1,0 +1,11 @@
+{
+  "name": "tg-client",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "tsx --no-warnings src/index.ts"
+  },
+  "dependencies": {
+    "telegram": "2.26.22",
+    "tsx": "4.23.12"
+  }
+}
