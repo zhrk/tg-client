@@ -6,11 +6,11 @@ import { writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import { LogLevel } from 'telegram/extensions/Logger';
 import { createInterface } from 'readline/promises';
-import { UpdateConnectionState } from 'telegram/network';
+import { NewMessage } from 'telegram/events';
+
+const chats = Object.values(config.channels_ids);
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
-
-const ids = Object.values(config.from).map((item) => BigInt(item));
 
 (async () => {
   const client = new TelegramClient(new StringSession(config.session), config.id, config.hash, {
@@ -28,12 +28,9 @@ const ids = Object.values(config.from).map((item) => BigInt(item));
   mkdirSync(path.join(process.cwd(), 'output'), { recursive: true });
 
   client.addEventHandler(async (event) => {
-    if (event instanceof UpdateConnectionState) return;
-
-    if (ids.includes(event.message.fromId.channelId.value))
-      writeFileSync(
-        path.join(process.cwd(), 'output', `${new Date().getTime()}.json`),
-        JSON.stringify(event, null, 2)
-      );
-  });
+    writeFileSync(
+      path.join(process.cwd(), 'output', `${new Date().getTime()}.json`),
+      JSON.stringify(event.message, null, 2)
+    );
+  }, new NewMessage({ chats }));
 })();
