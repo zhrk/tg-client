@@ -13,7 +13,7 @@ const rl = createInterface({ input: process.stdin, output: process.stdout });
 (async () => {
   const client = new TelegramClient(new StringSession(config.session), config.id, config.hash, {
     proxy: { ip: '127.0.0.1', port: 12334, socksType: 5 },
-    baseLogger: new Logger(LogLevel.NONE),
+    // baseLogger: new Logger(LogLevel.NONE),
   });
 
   await client.start({
