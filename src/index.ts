@@ -69,7 +69,7 @@ const rl = createInterface({ input: process.stdin, output: process.stdout });
         await client.downloadMedia(message.media, { outputFile: userDir });
 
         if (!mappedId) {
-          console.log(`${message.id} -> ${folder}`);
+          console.log(`[Media]:`, folder);
         }
       } catch (error) {
         console.error(`[Media][${message.id}]:`, error);
