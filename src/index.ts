@@ -5,6 +5,7 @@ import { mkdirSync } from 'fs';
 import path from 'path';
 import { createInterface } from 'readline/promises';
 import { NewMessage } from 'teleproto/events';
+import { Logger } from './logger';
 
 const askInput = async (prompt: string) => {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -19,7 +20,7 @@ const askInput = async (prompt: string) => {
 (async () => {
   const client = new TelegramClient(new StringSession(config.session), config.id, config.hash, {
     proxy: { ip: '127.0.0.1', port: 12334, socksType: 5 },
-    // baseLogger: new Logger(LogLevel.NONE),
+    baseLogger: new Logger(),
   });
 
   await client.start({
@@ -75,7 +76,7 @@ const askInput = async (prompt: string) => {
         await client.downloadMedia(message.media, { outputFile: userDir });
 
         if (!mappedId) {
-          console.log(`[Media]:`, folder);
+          console.log(`🖼️`, folder);
         }
       } catch (error) {
         console.error(`[Media][${message.id}]:`, error);
