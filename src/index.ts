@@ -1,14 +1,20 @@
-import { Api, TelegramClient } from 'telegram';
-import { StringSession } from 'telegram/sessions';
-import { Logger } from 'telegram/extensions/Logger';
+import { Api, TelegramClient } from 'teleproto';
+import { StringSession } from 'teleproto/sessions';
 import config from '../config.json';
 import { mkdirSync } from 'fs';
 import path from 'path';
-import { LogLevel } from 'telegram/extensions/Logger';
 import { createInterface } from 'readline/promises';
-import { NewMessage } from 'telegram/events';
+import { NewMessage } from 'teleproto/events';
 
-const rl = createInterface({ input: process.stdin, output: process.stdout });
+const askInput = async (prompt: string) => {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+
+  try {
+    return await rl.question(prompt);
+  } finally {
+    rl.close();
+  }
+};
 
 (async () => {
   const client = new TelegramClient(new StringSession(config.session), config.id, config.hash, {
@@ -17,9 +23,9 @@ const rl = createInterface({ input: process.stdin, output: process.stdout });
   });
 
   await client.start({
-    phoneNumber: async () => await rl.question('phone number: '),
-    password: async () => await rl.question('password: '),
-    phoneCode: async () => await rl.question('phone code: '),
+    phoneNumber: async () => await askInput('phone number: '),
+    password: async () => await askInput('password: '),
+    phoneCode: async () => await askInput('phone code: '),
     onError: (error) => console.log(error),
   });
 
