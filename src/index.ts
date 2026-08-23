@@ -50,7 +50,7 @@ const askInput = async (prompt: string) => {
   client.addEventHandler(async (event) => {
     const message = event.message;
 
-    if (message.media) {
+    if (message.media && !(message.media instanceof Api.MessageMediaWebPage)) {
       let userId = 'unknown';
 
       if (message.peerId) {
@@ -79,7 +79,7 @@ const askInput = async (prompt: string) => {
           console.log(`🖼️`, folder);
         }
       } catch (error) {
-        console.error(`[Media][${message.id}]:`, error);
+        console.error(`[Media][${folder}]:`, error);
       }
     }
   }, new NewMessage({ chats }));
