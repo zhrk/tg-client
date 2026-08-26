@@ -9,7 +9,6 @@ import { Logger } from './logger';
 import sanitize from 'sanitize-filename';
 
 const cwd = process.cwd();
-
 const outputDir = path.join(cwd, 'output');
 
 const askInput = async (prompt: string) => {
@@ -37,54 +36,50 @@ const askInput = async (prompt: string) => {
 
   const dialogs = await client.getDialogs();
 
-  const noForwardsDialogs = dialogs.filter((dialog) => {
+  const chats = dialogs.reduce<Record<string, string>>((acc, dialog) => {
     const entity = dialog.entity;
 
-    if (!entity) return false;
-    if (entity instanceof Api.Channel) return entity.noforwards === true;
-    if (entity instanceof Api.Chat) return entity.noforwards === true;
+    if (
+      (entity instanceof Api.Channel || entity instanceof Api.Chat) &&
+      entity.noforwards === true
+    ) {
+      acc[entity.id.toString()] = entity.title;
+    }
 
-    return false;
-  });
-
-  const chats = noForwardsDialogs.map((item) => item.id?.toString() || '');
+    return acc;
+  }, {});
 
   mkdirSync(outputDir, { recursive: true });
 
-  client.addEventHandler(async (event) => {
-    const message = event.message;
+  client.addEventHandler(
+    async (event) => {
+      const message = event.message;
 
-    if (message.media && !(message.media instanceof Api.MessageMediaWebPage)) {
-      let userId = 'unknown';
+      if (message.media && !(message.media instanceof Api.MessageMediaWebPage)) {
+        let entityId = 'unknown';
 
-      if (message.peerId) {
-        if ('userId' in message.peerId) {
-          userId = message.peerId.userId.toString();
-        } else if ('channelId' in message.peerId) {
-          userId = message.peerId.channelId.toString();
-        } else if ('chatId' in message.peerId) {
-          userId = message.peerId.chatId.toString();
+        if (message.peerId) {
+          if ('channelId' in message.peerId) {
+            entityId = message.peerId.channelId.toString();
+          } else if ('chatId' in message.peerId) {
+            entityId = message.peerId.chatId.toString();
+          } else if ('userId' in message.peerId) {
+            entityId = message.peerId.userId.toString();
+          }
+        }
+
+        const folder = sanitize(chats[entityId] || entityId);
+
+        const userDir = path.join(outputDir, folder);
+        mkdirSync(userDir, { recursive: true });
+
+        try {
+          await client.downloadMedia(message.media, { outputFile: userDir });
+        } catch (error) {
+          console.error(`[Media][${folder}]:`, error);
         }
       }
-
-      const mappedId = Object.entries(config.ids)
-        .find(([id]) => id === userId)
-        ?.at(1);
-
-      const folder = mappedId || userId;
-
-      const userDir = path.join(outputDir, sanitize(folder));
-      mkdirSync(userDir, { recursive: true });
-
-      try {
-        await client.downloadMedia(message.media, { outputFile: userDir });
-
-        if (!mappedId) {
-          console.log(`🖼️`, folder);
-        }
-      } catch (error) {
-        console.error(`[Media][${folder}]:`, error);
-      }
-    }
-  }, new NewMessage({ chats }));
+    },
+    new NewMessage({ chats: Object.keys(chats) })
+  );
 })();
