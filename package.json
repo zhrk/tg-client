@@ -5,6 +5,7 @@
     "start": "tsx --no-warnings src/index.ts"
   },
   "dependencies": {
+    "sanitize-filename": "1.6.4",
     "teleproto": "1.228.5",
     "tsx": "4.23.12"
   }
