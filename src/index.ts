@@ -1,11 +1,16 @@
 import { Api, TelegramClient } from 'teleproto';
 import { StringSession } from 'teleproto/sessions';
 import config from '../config.json';
-import { mkdirSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { createInterface } from 'readline/promises';
 import { NewMessage } from 'teleproto/events';
 import { Logger } from './logger';
+
+const cwd = process.cwd();
+
+const outputDir = path.join(cwd, 'output');
+const logsDir = path.join(cwd, 'logs');
 
 const askInput = async (prompt: string) => {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -44,8 +49,8 @@ const askInput = async (prompt: string) => {
 
   const chats = noForwardsDialogs.map((item) => item.id?.toString() || '');
 
-  const outputDir = path.join(process.cwd(), 'output');
   mkdirSync(outputDir, { recursive: true });
+  mkdirSync(logsDir, { recursive: true });
 
   client.addEventHandler(async (event) => {
     const message = event.message;
@@ -71,6 +76,23 @@ const askInput = async (prompt: string) => {
 
       const userDir = path.join(outputDir, folder);
       mkdirSync(userDir, { recursive: true });
+
+      const json = JSON.stringify(
+        message,
+        (_, value) => {
+          if (typeof value === 'bigint') return value.toString();
+          if (Buffer.isBuffer(value)) return value.toString('hex');
+
+          return value;
+        },
+        2
+      );
+
+      writeFileSync(
+        path.join(logsDir, `${userId}_${message.id}_${Date.now()}.json`),
+        json,
+        'utf-8'
+      );
 
       try {
         await client.downloadMedia(message.media, { outputFile: userDir });
