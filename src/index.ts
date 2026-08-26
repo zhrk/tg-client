@@ -4,7 +4,7 @@ import config from '../config.json';
 import { mkdirSync } from 'fs';
 import path from 'path';
 import { createInterface } from 'readline/promises';
-import { NewMessage } from 'teleproto/events';
+import { NewMessage, NewMessageEvent } from 'teleproto/events';
 import { Logger } from './logger';
 import sanitize from 'sanitize-filename';
 
@@ -34,52 +34,72 @@ const askInput = async (prompt: string) => {
     onError: (error) => console.log(error),
   });
 
-  const dialogs = await client.getDialogs();
+  const getChats = async () => {
+    const dialogs = await client.getDialogs();
 
-  const chats = dialogs.reduce<Record<string, string>>((acc, dialog) => {
-    const entity = dialog.entity;
+    return dialogs.reduce<Record<string, string>>((acc, dialog) => {
+      const entity = dialog.entity;
 
-    if (
-      (entity instanceof Api.Channel || entity instanceof Api.Chat) &&
-      entity.noforwards === true
-    ) {
-      acc[entity.id.toString()] = entity.title;
-    }
+      if (
+        (entity instanceof Api.Channel || entity instanceof Api.Chat) &&
+        entity.noforwards === true
+      ) {
+        acc[entity.id.toString()] = entity.title;
+      }
 
-    return acc;
-  }, {});
+      return acc;
+    }, {});
+  };
+
+  let chats = await getChats();
+
+  const getEventsFilter = () => new NewMessage({ chats: Object.keys(chats) });
+
+  let eventsFilter = getEventsFilter();
 
   mkdirSync(outputDir, { recursive: true });
 
-  client.addEventHandler(
-    async (event) => {
-      const message = event.message;
+  const handler = async (event: NewMessageEvent) => {
+    const message = event.message;
 
-      if (message.media && !(message.media instanceof Api.MessageMediaWebPage)) {
-        let entityId = 'unknown';
+    if (message.media && !(message.media instanceof Api.MessageMediaWebPage)) {
+      let entityId = 'unknown';
 
-        if (message.peerId) {
-          if ('channelId' in message.peerId) {
-            entityId = message.peerId.channelId.toString();
-          } else if ('chatId' in message.peerId) {
-            entityId = message.peerId.chatId.toString();
-          } else if ('userId' in message.peerId) {
-            entityId = message.peerId.userId.toString();
-          }
-        }
-
-        const folder = sanitize(chats[entityId] || entityId);
-
-        const userDir = path.join(outputDir, folder);
-        mkdirSync(userDir, { recursive: true });
-
-        try {
-          await client.downloadMedia(message.media, { outputFile: userDir });
-        } catch (error) {
-          console.error(`[Media][${folder}]:`, error);
+      if (message.peerId) {
+        if ('channelId' in message.peerId) {
+          entityId = message.peerId.channelId.toString();
+        } else if ('chatId' in message.peerId) {
+          entityId = message.peerId.chatId.toString();
+        } else if ('userId' in message.peerId) {
+          entityId = message.peerId.userId.toString();
         }
       }
-    },
-    new NewMessage({ chats: Object.keys(chats) })
-  );
+
+      const folder = sanitize(chats[entityId] || entityId);
+
+      const userDir = path.join(outputDir, folder);
+      mkdirSync(userDir, { recursive: true });
+
+      try {
+        await client.downloadMedia(message.media, { outputFile: userDir });
+      } catch (error) {
+        console.error(`[Media][${folder}]:`, error);
+      }
+    }
+  };
+
+  client.addEventHandler(handler, eventsFilter);
+
+  client.addEventHandler(async (event) => {
+    if (event instanceof Api.UpdateChannel) {
+      console.log('🔔 channel updated');
+
+      client.removeEventHandler(handler, eventsFilter);
+
+      chats = await getChats();
+      eventsFilter = getEventsFilter();
+
+      client.addEventHandler(handler, eventsFilter);
+    }
+  });
 })();
