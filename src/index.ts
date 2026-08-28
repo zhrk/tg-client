@@ -11,6 +11,8 @@ import sanitize from 'sanitize-filename';
 const cwd = process.cwd();
 const outputDir = path.join(cwd, 'output');
 
+mkdirSync(outputDir, { recursive: true });
+
 const askInput = async (prompt: string) => {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
@@ -22,9 +24,11 @@ const askInput = async (prompt: string) => {
 };
 
 (async () => {
+  const logger = new Logger();
+
   const client = new TelegramClient(new StringSession(config.session), config.id, config.hash, {
     proxy: { ip: '127.0.0.1', port: 12334, socksType: 5 },
-    baseLogger: new Logger(),
+    baseLogger: logger,
   });
 
   await client.start({
@@ -33,6 +37,9 @@ const askInput = async (prompt: string) => {
     phoneCode: async () => await askInput('phone code: '),
     onError: (error) => console.log(error),
   });
+
+  let chats: Record<string, string> = {};
+  let eventType: NewMessage | null = null;
 
   const getChats = async () => {
     const dialogs = await client.getDialogs();
@@ -51,18 +58,13 @@ const askInput = async (prompt: string) => {
     }, {});
   };
 
-  let chats = await getChats();
-
-  const getEventsFilter = () => new NewMessage({ chats: Object.keys(chats) });
-
-  let eventsFilter = getEventsFilter();
-
-  mkdirSync(outputDir, { recursive: true });
-
   const handler = async (event: NewMessageEvent) => {
     const message = event.message;
 
-    if (message.media && !(message.media instanceof Api.MessageMediaWebPage)) {
+    if (
+      message.media &&
+      !(message.media instanceof Api.MessageMediaWebPage || message instanceof Api.MessageMediaPoll)
+    ) {
       let entityId = 'unknown';
 
       if (message.peerId) {
@@ -81,25 +83,42 @@ const askInput = async (prompt: string) => {
       mkdirSync(userDir, { recursive: true });
 
       try {
-        await client.downloadMedia(message.media, { outputFile: userDir });
+        await client.downloadMedia(message, { outputFile: userDir });
       } catch (error) {
         console.error(`[Media][${folder}]:`, error);
       }
     }
   };
 
-  client.addEventHandler(handler, eventsFilter);
+  const refreshSubscriptions = async (type: 'init' | 'reconnect' | 'update') => {
+    if (eventType) {
+      client.removeEventHandler(handler, eventType);
+    }
 
-  client.addEventHandler(async (event) => {
-    if (event instanceof Api.UpdateChannel) {
-      console.log('🔔 channel updated');
+    chats = await getChats();
 
-      client.removeEventHandler(handler, eventsFilter);
+    const chatIds = Object.keys(chats);
 
-      chats = await getChats();
-      eventsFilter = getEventsFilter();
+    eventType = new NewMessage({ chats: chatIds });
 
-      client.addEventHandler(handler, eventsFilter);
+    client.addEventHandler(handler, eventType);
+
+    const emoji: Record<typeof type, string> = {
+      init: '✅',
+      reconnect: '🔄',
+      update: '🔔',
+    };
+
+    console.log(`${emoji} [${type}] ${chatIds.length} chats`);
+  };
+
+  await refreshSubscriptions('init');
+
+  logger.events.on('reconnect', () => refreshSubscriptions('reconnect'));
+
+  client.addEventHandler((event) => {
+    if (event instanceof Api.UpdateChannel || event instanceof Api.UpdateChat) {
+      refreshSubscriptions('update');
     }
   });
 })();
