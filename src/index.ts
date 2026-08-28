@@ -108,11 +108,11 @@ const askInput = async (prompt: string) => {
 
     const emoji: Record<typeof type, string> = {
       init: '✅',
-      reconnect: '🔄',
+      reconnect: '✅',
       update: '🔔',
     };
 
-    console.log(`${emoji[type]} [${type}] ${chatIds.length} chats`);
+    console.log(`${emoji[type]} ${chatIds.length} chats`);
   };
 
   await refreshSubscriptions('init');
