@@ -64,8 +64,8 @@ const askInput = async (prompt: string) => {
     if (
       message.media &&
       !(
-        message.media instanceof Api.MessageMediaWebPage ||
-        message.media instanceof Api.MessageMediaPoll
+        message.media instanceof Api.MessageMediaPoll ||
+        message.media instanceof Api.MessageMediaWebPage
       )
     ) {
       let entityId = 'unknown';
