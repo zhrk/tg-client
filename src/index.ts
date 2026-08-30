@@ -1,5 +1,4 @@
 import { startClient } from './services/client';
-import scrap from './scrap';
 import subscribe from './subscribe';
 
 (async () => {
@@ -7,5 +6,5 @@ import subscribe from './subscribe';
 
   const { chats } = await subscribe();
 
-  await scrap(chats);
+  // await scrap();
 })();

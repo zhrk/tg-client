@@ -1,12 +1,10 @@
 import { Api } from 'teleproto';
-import { mkdirSync } from 'fs';
-import path from 'path';
 import { NewMessage, NewMessageEvent } from 'teleproto/events';
 import logger from './services/logger';
-import sanitize from 'sanitize-filename';
 import { Chats } from './types';
-import { outputDir } from './paths';
 import client from './services/client';
+import downloadMedia from './downloadMedia';
+import getEntityId from './getEntityId';
 
 const subscribe = async () => {
   let chats: Chats = {};
@@ -29,39 +27,12 @@ const subscribe = async () => {
     }, {});
   };
 
-  const handler = async (event: NewMessageEvent) => {
-    const message = event.message;
+  const handler = (event: NewMessageEvent) => {
+    const { message } = event;
 
-    if (
-      message.media &&
-      !(
-        message.media instanceof Api.MessageMediaPoll ||
-        message.media instanceof Api.MessageMediaWebPage
-      )
-    ) {
-      let entityId = 'unknown';
+    const entityId = getEntityId(message);
 
-      if (message.peerId) {
-        if ('channelId' in message.peerId) {
-          entityId = message.peerId.channelId.toString();
-        } else if ('chatId' in message.peerId) {
-          entityId = message.peerId.chatId.toString();
-        } else if ('userId' in message.peerId) {
-          entityId = message.peerId.userId.toString();
-        }
-      }
-
-      const folder = sanitize(chats[entityId] || entityId);
-
-      const userDir = path.join(outputDir, folder);
-      mkdirSync(userDir, { recursive: true });
-
-      try {
-        await client.downloadMedia(message, { outputFile: userDir });
-      } catch (error) {
-        console.error(`[Media][${folder}]:`, error);
-      }
-    }
+    downloadMedia(message, chats[entityId] || entityId);
   };
 
   let refresing = false;
