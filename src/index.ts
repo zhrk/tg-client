@@ -93,26 +93,34 @@ const askInput = async (prompt: string) => {
     }
   };
 
+  let refresing = false;
+
   const refreshSubscriptions = async (type: 'init' | 'reconnect' | 'update') => {
-    if (eventType) {
-      client.removeEventHandler(handler, eventType);
+    if (!refresing) {
+      refresing = true;
+
+      if (eventType) {
+        client.removeEventHandler(handler, eventType);
+      }
+
+      chats = await getChats();
+
+      const chatIds = Object.keys(chats);
+
+      eventType = new NewMessage({ chats: chatIds });
+
+      client.addEventHandler(handler, eventType);
+
+      const emoji: Record<typeof type, string> = {
+        init: '✅',
+        reconnect: '✅',
+        update: '🔔',
+      };
+
+      console.log(`${emoji[type]} ${chatIds.length} chats`);
+
+      refresing = false;
     }
-
-    chats = await getChats();
-
-    const chatIds = Object.keys(chats);
-
-    eventType = new NewMessage({ chats: chatIds });
-
-    client.addEventHandler(handler, eventType);
-
-    const emoji: Record<typeof type, string> = {
-      init: '✅',
-      reconnect: '✅',
-      update: '🔔',
-    };
-
-    console.log(`${emoji[type]} ${chatIds.length} chats`);
   };
 
   await refreshSubscriptions('init');
