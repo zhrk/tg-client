@@ -1,7 +1,7 @@
 import { Logger as VanillaLogger } from 'teleproto/extensions/Logger';
 import EventEmitter from 'events';
 
-export class Logger extends VanillaLogger {
+class Logger extends VanillaLogger {
   public events = new EventEmitter();
 
   override log: VanillaLogger['log'] = (_, message) => {
@@ -14,3 +14,7 @@ export class Logger extends VanillaLogger {
     }
   };
 }
+
+const logger = new Logger();
+
+export default logger;
