@@ -5,6 +5,9 @@
     "start": "tsx --no-warnings src/index.ts"
   },
   "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "ansi-to-html": "0.7.2",
+    "hono": "4.13.5",
     "sanitize-filename": "1.6.4",
     "teleproto": "1.228.5",
     "tsx": "4.23.12"
