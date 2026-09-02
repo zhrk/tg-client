@@ -9,18 +9,24 @@ const convert = new Convert({ newline: true, escapeXML: true });
 
 const logs: string[] = [];
 
-console.log = new Proxy(console.log, {
-  apply(target, thisArg, args) {
-    const line = args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+const interceptStream = (stream: NodeJS.WriteStream) => {
+  stream.write = new Proxy(stream.write, {
+    apply(target, thisArg, args: Parameters<typeof stream.write>) {
+      const chunk = args[0];
+      const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
 
-    logs.push(convert.toHtml(line));
+      logs.push(convert.toHtml(text));
 
-    return Reflect.apply(target, thisArg, args);
-  },
-});
+      return Reflect.apply(target, thisArg, args);
+    },
+  });
+};
+
+interceptStream(process.stdout);
+interceptStream(process.stderr);
 
 app.get('/', (c) => {
-  const renderedLogs = logs.join('\n');
+  const renderedLogs = logs.join('');
 
   return c.html(
     html`<!DOCTYPE html>
