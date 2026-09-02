@@ -20,7 +20,7 @@ console.log = new Proxy(console.log, {
 });
 
 app.get('/', (c) => {
-  const renderedLogs = logs.join('');
+  const renderedLogs = logs.join('\n');
 
   return c.html(
     html`<!DOCTYPE html>
