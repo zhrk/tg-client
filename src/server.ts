@@ -56,12 +56,6 @@ app.get('/', (c) => {
       <html lang="ru">
         <head>
           <meta charset="utf-8" />
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Cascadia+Mono:ital,wght@0,200..700;1,200..700&display=swap"
-            rel="stylesheet"
-          />
           <title>Console</title>
           <style>
             html {
