@@ -11,7 +11,8 @@ const downloadMedia = async (message: Api.Message, folder: string) => {
     !(
       message.media instanceof Api.MessageMediaPoll ||
       message.media instanceof Api.MessageMediaWebPage ||
-      message.media instanceof Api.MessageMediaPaidMedia
+      message.media instanceof Api.MessageMediaPaidMedia ||
+      message.media instanceof Api.MessageMediaUnsupported
     )
   ) {
     folder = sanitize(folder);
