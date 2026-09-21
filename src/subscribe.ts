@@ -5,7 +5,7 @@ import { Chats } from './types';
 import client from './services/client';
 import downloadMedia from './downloadMedia';
 import getEntityId from './getEntityId';
-import { writeFileSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { outputDir } from './paths';
 import path from 'path';
 
@@ -78,17 +78,28 @@ const subscribe = async () => {
     }
 
     if (event instanceof Api.UpdateStory) {
-      const json = JSON.stringify(
-        event,
-        (_, value) => (typeof value === 'bigint' ? value.toString() : value),
-        2
-      );
+      const { story, peer } = event;
 
-      const filePath = path.join(outputDir, `${new Date().getTime()}.json`);
+      if (story instanceof Api.StoryItem) {
+        const userId = peer instanceof Api.PeerUser ? peer.userId.toString() : 'unknown';
+        const folderName = `stories_${userId}_${new Date().getTime()}`;
 
-      writeFileSync(filePath, json, 'utf-8');
+        const userDir = path.join(outputDir, folderName);
+        mkdirSync(userDir, { recursive: true });
 
-      console.log(`🐛}`);
+        const json = JSON.stringify(
+          event,
+          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2
+        );
+
+        const logPath = path.join(userDir, `${story.id}.json`);
+        writeFileSync(logPath, json, 'utf-8');
+
+        downloadMedia(story, folderName);
+
+        console.log(`🐛`);
+      }
     }
   });
 
