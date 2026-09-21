@@ -5,6 +5,9 @@ import { Chats } from './types';
 import client from './services/client';
 import downloadMedia from './downloadMedia';
 import getEntityId from './getEntityId';
+import { writeFileSync } from 'fs';
+import { outputDir } from './paths';
+import path from 'path';
 
 const subscribe = async () => {
   let chats: Chats = {};
@@ -35,11 +38,11 @@ const subscribe = async () => {
     downloadMedia(message, chats[entityId] || entityId);
   };
 
-  let refresing = false;
+  let refreshing = false;
 
   const refreshSubscriptions = async (type: 'init' | 'reconnect' | 'update') => {
-    if (!refresing) {
-      refresing = true;
+    if (!refreshing) {
+      refreshing = true;
 
       if (eventType) {
         client.removeEventHandler(handler, eventType);
@@ -61,7 +64,7 @@ const subscribe = async () => {
 
       console.log(`${emoji[type]} ${chatIds.length} chats`);
 
-      refresing = false;
+      refreshing = false;
     }
   };
 
@@ -72,6 +75,20 @@ const subscribe = async () => {
   client.addEventHandler((event) => {
     if (event instanceof Api.UpdateChannel || event instanceof Api.UpdateChat) {
       refreshSubscriptions('update');
+    }
+
+    if (event instanceof Api.UpdateStory) {
+      const json = JSON.stringify(
+        event,
+        (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+        2
+      );
+
+      const filePath = path.join(outputDir, `${new Date().getTime()}.json`);
+
+      writeFileSync(filePath, json, 'utf-8');
+
+      console.log(`🐛}`);
     }
   });
 
