@@ -8,7 +8,6 @@ import getEntityId from './getEntityId';
 import { writeFileSync, mkdirSync } from 'fs';
 import { outputDir } from './paths';
 import path from 'path';
-import config from '../config.json';
 
 const subscribe = async () => {
   let chats: Chats = {};
@@ -36,15 +35,7 @@ const subscribe = async () => {
 
     const entityId = getEntityId(message);
 
-    const path = downloadMedia(message, chats[entityId] || entityId);
-
-    if (config.rc === entityId) {
-      fetch(`${config.bot_url}/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: path, channel: 'second' }),
-      });
-    }
+    downloadMedia(message, chats[entityId] || entityId);
   };
 
   let refreshing = false;
