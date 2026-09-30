@@ -21,7 +21,7 @@ const downloadMedia = async (entity: Api.Message | Api.StoryItem, folder: string
     mkdirSync(userDir, { recursive: true });
 
     try {
-      await client.downloadMedia(entity.media, { outputFile: userDir });
+      return await client.downloadMedia(entity.media, { outputFile: userDir });
     } catch (error) {
       console.error(`[Media][${folder}]:`, error);
     }
