@@ -5,7 +5,7 @@ import sanitize from 'sanitize-filename';
 import { outputDir } from './paths';
 import client from './services/client';
 
-const downloadMedia = async (entity: Api.Message | Api.StoryItem, folder: string) => {
+const downloadMedia = async (entity: Api.Message | Api.StoryItem, folder: string, dir?: string) => {
   if (
     entity.media &&
     !(
@@ -15,9 +15,7 @@ const downloadMedia = async (entity: Api.Message | Api.StoryItem, folder: string
       entity.media instanceof Api.MessageMediaUnsupported
     )
   ) {
-    folder = sanitize(folder);
-
-    const userDir = path.join(outputDir, folder);
+    const userDir = path.join(dir || outputDir, sanitize(folder));
     mkdirSync(userDir, { recursive: true });
 
     try {

@@ -8,6 +8,9 @@ import getEntityId from './getEntityId';
 import { writeFileSync, mkdirSync } from 'fs';
 import { outputDir } from './paths';
 import path from 'path';
+import config from '../config.json';
+
+const dirs: Record<string, string> = config.dirs;
 
 const subscribe = async () => {
   let chats: Chats = {};
@@ -35,7 +38,7 @@ const subscribe = async () => {
 
     const entityId = getEntityId(message);
 
-    downloadMedia(message, chats[entityId] || entityId);
+    downloadMedia(message, chats[entityId] || entityId, dirs[entityId]);
   };
 
   let refreshing = false;
