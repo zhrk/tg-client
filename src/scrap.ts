@@ -7,15 +7,17 @@ const scrap = async () => {
 
   const test = dialogs.map((dialog, index) => ({ index, title: dialog.title }));
 
-  console.log(test);
+  // console.log(test);
 
-  const messages = await client.getMessages(dialogs[0].entity);
+  const messages = await client.getMessages(dialogs[0].entity, { limit: 100 });
 
   for (const message of messages) {
     const entityId = getEntityId(message);
 
     await downloadMedia(message, entityId);
   }
+
+  console.log('done');
 };
 
 export default scrap;
