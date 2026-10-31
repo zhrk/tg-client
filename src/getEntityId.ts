@@ -1,15 +1,17 @@
 import { Api } from 'teleproto';
 
-const getEntityId = (message: Api.Message) => {
+const getEntityId = (source: Api.Message | Api.TypePeer) => {
   let entityId = 'unknown';
 
-  if (message.peerId) {
-    if ('channelId' in message.peerId) {
-      entityId = message.peerId.channelId.toString();
-    } else if ('chatId' in message.peerId) {
-      entityId = message.peerId.chatId.toString();
-    } else if ('userId' in message.peerId) {
-      entityId = message.peerId.userId.toString();
+  const peer = 'peerId' in source ? source.peerId : source;
+
+  if (peer) {
+    if ('channelId' in peer && peer.channelId) {
+      entityId = peer.channelId.toString();
+    } else if ('chatId' in peer && peer.chatId) {
+      entityId = peer.chatId.toString();
+    } else if ('userId' in peer && peer.userId) {
+      entityId = peer.userId.toString();
     }
   }
 

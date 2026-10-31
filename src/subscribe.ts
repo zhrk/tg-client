@@ -84,24 +84,11 @@ const subscribe = async () => {
       const { story, peer } = event;
 
       if (story instanceof Api.StoryItem) {
-        const userId = peer instanceof Api.PeerUser ? peer.userId.toString() : 'unknown';
-        const folderName = `stories_${userId}_${new Date().getTime()}`;
+        const entityId = getEntityId(peer);
 
-        const userDir = path.join(outputDir, folderName);
-        mkdirSync(userDir, { recursive: true });
+        const storiesDir = path.join(outputDir, 'stories');
 
-        const json = JSON.stringify(
-          event,
-          (_, value) => (typeof value === 'bigint' ? value.toString() : value),
-          2
-        );
-
-        const logPath = path.join(userDir, `${story.id}.json`);
-        writeFileSync(logPath, json, 'utf-8');
-
-        downloadMedia(story, folderName);
-
-        console.log(`🐛`);
+        downloadMedia(story, entityId, storiesDir);
       }
     }
   });
