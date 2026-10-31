@@ -16,9 +16,11 @@ const subscribe = async () => {
   let eventType: NewMessage | null = null;
 
   const getChats = async () => {
+    const acc: Chats = {};
+
     const dialogs = await client.getDialogs();
 
-    return dialogs.reduce<Chats>((acc, dialog) => {
+    for (const dialog of dialogs) {
       const entity = dialog.entity;
 
       if (
@@ -27,9 +29,23 @@ const subscribe = async () => {
       ) {
         acc[entity.id.toString()] = entity.title;
       }
+    }
 
-      return acc;
-    }, {});
+    const contacts = await client.invoke(
+      new Api.contacts.GetContacts({ hash: 0 as unknown as any })
+    );
+
+    if (contacts instanceof Api.contacts.Contacts) {
+      for (const contact of contacts.users) {
+        if (contact instanceof Api.User) {
+          const name = `${contact.firstName}${contact.lastName ? ` ${contact.lastName}` : ''}`;
+
+          acc[contact.id.toString()] = name;
+        }
+      }
+    }
+
+    return acc;
   };
 
   const handler = (event: NewMessageEvent) => {
@@ -64,7 +80,7 @@ const subscribe = async () => {
         update: '🔔',
       };
 
-      console.log(`${emoji[type]} ${chatIds.length} chats`);
+      console.log(`${emoji[type]} ${chatIds.length}`);
 
       refreshing = false;
     }
@@ -75,7 +91,11 @@ const subscribe = async () => {
   logger.events.on('reconnect', () => refreshSubscriptions('reconnect'));
 
   client.addEventHandler((event) => {
-    if (event instanceof Api.UpdateChannel || event instanceof Api.UpdateChat) {
+    if (
+      event instanceof Api.UpdateChannel ||
+      event instanceof Api.UpdateChat ||
+      event instanceof Api.UpdatePeerSettings
+    ) {
       refreshSubscriptions('update');
     }
 
@@ -87,7 +107,7 @@ const subscribe = async () => {
 
         const storiesDir = path.join(outputDir, '_stories');
 
-        downloadMedia(story, entityId, storiesDir);
+        downloadMedia(story, chats[entityId], storiesDir);
       }
     }
   });
