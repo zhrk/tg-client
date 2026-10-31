@@ -8,5 +8,9 @@
     "sanitize-filename": "1.6.4",
     "teleproto": "1.228.5",
     "tsx": "4.23.12"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "typescript": "7.0.2"
   }
 }
