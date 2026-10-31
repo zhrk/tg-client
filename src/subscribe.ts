@@ -5,7 +5,6 @@ import { Chats } from './types';
 import client from './services/client';
 import downloadMedia from './downloadMedia';
 import getEntityId from './getEntityId';
-import { writeFileSync, mkdirSync } from 'fs';
 import { outputDir } from './paths';
 import path from 'path';
 import config from '../config.json';
