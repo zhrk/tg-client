@@ -86,7 +86,7 @@ const subscribe = async () => {
       if (story instanceof Api.StoryItem) {
         const entityId = getEntityId(peer);
 
-        const storiesDir = path.join(outputDir, 'stories');
+        const storiesDir = path.join(outputDir, '_stories');
 
         downloadMedia(story, entityId, storiesDir);
       }
