@@ -6,6 +6,8 @@ import { outputDir } from './paths';
 import client from './services/client';
 
 const downloadMedia = async (entity: Api.Message | Api.StoryItem, folder: string, dir?: string) => {
+  folder = String(folder);
+
   if (
     entity.media &&
     !(
